@@ -38,7 +38,16 @@ const MENU_ITEMS = [
   { label: "RARE MAP", path: "/RareMap" },
 ];
 
-export default function GlobalHeader({ onCharacterToggle, characterVisible, onCharacterSizeChange, onAnimation }) {
+const THEMES = [
+  { id: "cyberpunk", label: "Cyberpunk" },
+  { id: "neumorphism", label: "Neumorphic" },
+  { id: "glass", label: "Glass" },
+  { id: "neon", label: "Neon" },
+  { id: "black-gold", label: "Black Gold" },
+  { id: "apple", label: "Apple" },
+];
+
+export default function GlobalHeader({ onCharacterToggle, characterVisible, onCharacterSizeChange, onAnimation, currentTheme, onThemeChange }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [rareOpen, setRareOpen] = useState(false);
