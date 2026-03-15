@@ -1,307 +1,403 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAppSettings } from "@/components/AppSettingsContext";
+import { THEMES, FONTS_AR, FONTS_EN, ELEVENLABS_VOICES, AI_DIALECTS, AI_PERSONALITIES, BTN_SHAPES, MENU_STYLES } from "@/components/theme";
+import { base44 } from "@/api/base44Client";
 
-const TABS = ["UI SETTINGS", "AI SETTINGS", "SECURITY"];
+const TABS = [
+  { id: "ui", label: "UI" },
+  { id: "ai", label: "AI" },
+  { id: "char", label: "CHAR" },
+  { id: "security", label: "SECURE" },
+];
 
-const THEMES = ["Cyberpunk", "Glass", "Apple Style", "Neon", "Black Gold"];
-const FONTS = ["Inter", "Roboto", "Poppins", "Cairo", "Tajawal", "Noto Sans Arabic", "IBM Plex Mono", "Space Grotesk"];
-const VOICES = ["Nova", "Alloy", "Echo", "Fable", "Onyx", "Shimmer"];
-const LANGUAGES = ["Arabic", "English", "Hindi", "Chinese", "French", "German", "Italian", "Spanish"];
-const DIALECTS = ["Egyptian", "Gulf", "Sudanese", "Iraqi", "Algerian", "Moroccan", "Libyan", "Tunisian", "Lebanese"];
-const AI_PERSONALITIES = ["Assistant", "Analyst", "Creative", "Engineer", "Strategist", "Guardian"];
-const MENU_SECTIONS = ["Main Header", "Rare Codec", "RareHub", "My Rare", "Connect", "Vault"];
-const MENU_STYLES = ["Sidebar", "Apple Style", "Google Style", "Circle Menu", "Hamburger"];
+// Color palette (Apple-style)
+const PALETTE = [
+  "#00eaff","#3b82f6","#a78bfa","#f472b6","#f5c842","#10b981",
+  "#ef4444","#ff7700","#ffffff","#94a3b8","#1d1d1f","#000000",
+];
+
+const LANG_OPTIONS = [
+  { id: "ar", label: "العربية" },
+  { id: "en", label: "English" },
+  { id: "fr", label: "Français" },
+  { id: "ur", label: "اردو" },
+  { id: "es", label: "Español" },
+];
+
+// ── Small helper components ──
+const SectionBox = ({ children, style = {} }) => (
+  <div style={{ borderRadius: 18, border: "1px solid var(--ra-border)", background: "var(--rc)", padding: "14px 16px", marginBottom: 12, ...style }}>
+    {children}
+  </div>
+);
+
+const Label = ({ children }) => (
+  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", color: "var(--rt-dim)", textTransform: "uppercase", fontFamily: "'IBM Plex Mono',monospace", marginBottom: 10 }}>
+    {children}
+  </div>
+);
+
+const ChipRow = ({ items, value, onSelect, getLabel = x => x, getValue = x => x }) => (
+  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+    {items.map(item => {
+      const v = getValue(item); const l = getLabel(item);
+      const active = value === v;
+      return (
+        <button key={v} onClick={() => onSelect(v)}
+          style={{
+            padding: "7px 14px", borderRadius: "var(--rbtn-r, 12px)", fontSize: 12, fontWeight: 600, cursor: "pointer",
+            background: active ? "var(--ra)" : "var(--ra-dim)",
+            color: active ? "#000b10" : "var(--ra)",
+            border: `1px solid ${active ? "var(--ra)" : "var(--ra-border)"}`,
+            transition: "all 0.15s"
+          }}>
+          {l}
+        </button>
+      );
+    })}
+  </div>
+);
 
 export default function Settings() {
-  const [tab, setTab] = useState("UI SETTINGS");
+  const { settings, update, theme } = useAppSettings();
+  const [tab, setTab] = useState("ui");
+  const [previewVoice, setPreviewVoice] = useState(null);
+  const bgInputRef = useRef(null);
+  const themeImgRef = useRef(null);
 
-  // UI Settings state
-  const [theme, setTheme] = useState("Cyberpunk");
-  const [bgType, setBgType] = useState("color");
-  const [bgColor, setBgColor] = useState("#0a0a0f");
-  const [font, setFont] = useState("Inter");
-  const [fontWeight, setFontWeight] = useState("regular");
-  const [fontSize, setFontSize] = useState("medium");
-  const [btnShape, setBtnShape] = useState("rounded");
-  const [btnColor, setBtnColor] = useState("#00d4ff");
-  const [borderSize, setBorderSize] = useState("thin");
-  const [borderColor, setBorderColor] = useState("#00d4ff");
-  const [selectedMenuSection, setSelectedMenuSection] = useState("Main Header");
-  const [menuStyles, setMenuStyles] = useState({});
+  const uploadBg = (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const url = URL.createObjectURL(f);
+    update({ bgImage: url });
+  };
 
-  // AI Settings state
-  const [aiPersonality, setAiPersonality] = useState("Assistant");
-  const [aiVoice, setAiVoice] = useState("Nova");
-  const [aiLanguage, setAiLanguage] = useState("Arabic");
-  const [aiDialect, setAiDialect] = useState("Gulf");
-  const [previewingVoice, setPreviewingVoice] = useState(null);
+  const uploadThemeImg = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const { file_url } = await base44.integrations.Core.UploadFile({ file: f });
+    const res = await base44.integrations.Core.InvokeLLM({
+      prompt: `Extract the dominant color and 2-3 accent colors from this image as hex codes for a dark mobile UI theme.`,
+      file_urls: [file_url],
+      response_json_schema: { type: "object", properties: { accent: { type: "string" }, bg: { type: "string" } } }
+    });
+    if (res?.accent) update({ btnColor: res.accent, borderColor: res.accent + "55" });
+  };
 
-  // Security state
-  const [apiKey, setApiKey] = useState("");
-  const [supremeToken, setSupremeToken] = useState("");
-
-  const row = "flex items-center justify-between py-3 border-b border-slate-800/40";
-  const label = "text-sm text-slate-300";
-  const sublabel = "text-xs text-slate-500 mt-0.5";
-  const selectCls = "bg-slate-900/80 border border-slate-700/50 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-cyan-500/50 transition-all";
-  const btnCls = "px-4 py-2 rounded-xl text-xs font-bold border transition-all";
-  const activeBtnCls = `${btnCls} bg-cyan-500 text-black border-cyan-500`;
-  const inactiveBtnCls = `${btnCls} border-slate-700 text-slate-400 hover:border-cyan-500/50 hover:text-cyan-400`;
+  const previewElevenLabs = async (voiceId) => {
+    setPreviewVoice(voiceId);
+    try {
+      const key = settings.elevenLabsKey || "";
+      if (!key) { setPreviewVoice(null); return; }
+      const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: "POST",
+        headers: { "xi-api-key": key, "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "مرحبا، أنا مساعدك الذكي", voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
+      });
+      const blob = await r.blob();
+      new Audio(URL.createObjectURL(blob)).play();
+    } catch {}
+    setTimeout(() => setPreviewVoice(null), 3000);
+  };
 
   return (
-    <div className="min-h-screen pb-56 px-4 pt-4">
-      <div className="max-w-lg mx-auto">
-        <div className="text-center mb-6">
-          <div className="text-sm font-bold tracking-widest text-cyan-400 uppercase">Settings</div>
-        </div>
+    <div style={{ minHeight: "100vh", paddingBottom: 100 }}>
+      {/* Tab bar */}
+      <div style={{ display: "flex", gap: 8, padding: "12px 14px 0", position: "sticky", top: 64, zIndex: 30, background: "var(--rb)", backdropFilter: "blur(20px)" }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            style={{
+              flex: 1, padding: "9px 0", borderRadius: 12, fontSize: 10, fontWeight: 700,
+              letterSpacing: "0.1em", fontFamily: "'IBM Plex Mono',monospace", cursor: "pointer",
+              background: tab === t.id ? "var(--ra)" : "var(--ra-dim)",
+              color: tab === t.id ? "#000b10" : "var(--ra)",
+              border: `1px solid ${tab === t.id ? "var(--ra)" : "var(--ra-border)"}`,
+              transition: "all 0.15s"
+            }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6">
-          {TABS.map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all
-                ${tab === t ? "bg-cyan-500 text-black" : "border border-slate-700 text-slate-400 hover:border-cyan-500/50"}`}>
-              {t}
-            </button>
-          ))}
-        </div>
-
+      <div style={{ padding: "14px 14px 0" }}>
         <AnimatePresence mode="wait">
-          {/* UI SETTINGS */}
-          {tab === "UI SETTINGS" && (
-            <motion.div key="ui" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-              className="space-y-1">
+
+          {/* ══════════ UI TAB ══════════ */}
+          {tab === "ui" && (
+            <motion.div key="ui" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
 
               {/* Background */}
-              <div className="rounded-xl border border-slate-800/50 bg-slate-900/30 p-4 mb-3">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-3">Background</div>
-                <div className="flex gap-2 mb-3">
-                  {["color", "image"].map(t => (
-                    <button key={t} onClick={() => setBgType(t)} className={bgType === t ? activeBtnCls : inactiveBtnCls}>
-                      {t === "color" ? "Color" : "Image"}
+              <SectionBox>
+                <Label>Background</Label>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <div style={{ width: 56, height: 56, borderRadius: 12, border: "1px solid var(--ra-border)", overflow: "hidden", flexShrink: 0,
+                    background: settings.bgImage ? `url(${settings.bgImage}) center/cover` : theme.bg }} />
+                  <button onClick={() => bgInputRef.current?.click()}
+                    style={{ flex: 1, padding: "10px 0", borderRadius: 12, background: "var(--ra-dim)", color: "var(--ra)", border: "1px solid var(--ra-border)", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                    Upload Image
+                  </button>
+                  {settings.bgImage && (
+                    <button onClick={() => update({ bgImage: null })}
+                      style={{ padding: "10px 14px", borderRadius: 12, background: "rgba(255,60,60,0.1)", color: "#ff6060", border: "1px solid rgba(255,60,60,0.2)", fontSize: 12, cursor: "pointer" }}>
+                      Clear
                     </button>
-                  ))}
+                  )}
+                  <input ref={bgInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={uploadBg} />
                 </div>
-                {bgType === "color" && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg border border-slate-700" style={{ background: bgColor }} />
-                    <input type="color" value={bgColor} onChange={e => setBgColor(e.target.value)}
-                      className="flex-1 h-8 rounded-xl border border-slate-700 bg-transparent cursor-pointer" />
-                    <span className="text-xs text-slate-500 font-mono">{bgColor}</span>
-                  </div>
-                )}
-                {bgType === "image" && (
-                  <label className="flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-slate-700 text-slate-400 hover:border-cyan-500/50 hover:text-cyan-400 transition-all cursor-pointer">
-                    <input type="file" accept="image/*" className="hidden" />
-                    <span className="text-sm">Upload Background Image</span>
-                  </label>
-                )}
-              </div>
+              </SectionBox>
 
               {/* Theme */}
-              <div className="rounded-xl border border-slate-800/50 bg-slate-900/30 p-4 mb-3">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-3">Theme</div>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {THEMES.map(t => (
-                    <button key={t} onClick={() => setTheme(t)} className={theme === t ? activeBtnCls : inactiveBtnCls}>
-                      {t}
+              <SectionBox>
+                <Label>Theme</Label>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 12 }}>
+                  {Object.entries(THEMES).map(([key, t]) => (
+                    <button key={key} onClick={() => update({ theme: key })}
+                      style={{
+                        padding: "12px 0", borderRadius: 14, fontSize: 10, fontWeight: 700, cursor: "pointer",
+                        background: settings.theme === key ? t.accent + "22" : "rgba(255,255,255,0.03)",
+                        color: settings.theme === key ? t.accent : "var(--rt-dim)",
+                        border: `2px solid ${settings.theme === key ? t.accent : "rgba(255,255,255,0.06)"}`,
+                        letterSpacing: "0.08em"
+                      }}>
+                      <div style={{ width: 18, height: 18, borderRadius: 6, background: t.accent, margin: "0 auto 6px" }} />
+                      {t.name}
                     </button>
                   ))}
                 </div>
-                <label className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-slate-700 text-slate-400 hover:border-cyan-500/50 hover:text-cyan-400 transition-all cursor-pointer text-sm">
-                  <input type="file" accept="image/*" className="hidden" />
+                <button onClick={() => themeImgRef.current?.click()}
+                  style={{ width: "100%", padding: "10px 0", borderRadius: 12, background: "var(--ra-dim)", color: "var(--ra)", border: "1px dashed var(--ra-border)", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
                   Extract Colors from Image
-                </label>
-              </div>
+                </button>
+                <input ref={themeImgRef} type="file" accept="image/*" style={{ display: "none" }} onChange={uploadThemeImg} />
+              </SectionBox>
 
-              {/* Font */}
-              <div className="rounded-xl border border-slate-800/50 bg-slate-900/30 p-4 mb-3">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-3">Typography</div>
-                <select value={font} onChange={e => setFont(e.target.value)} className={`${selectCls} w-full mb-3`}>
-                  {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-                </select>
-                <div className="flex gap-2 mb-3">
-                  {["thin", "regular", "bold", "italic"].map(w => (
-                    <button key={w} onClick={() => setFontWeight(w)} className={fontWeight === w ? activeBtnCls : inactiveBtnCls}>
-                      {w}
-                    </button>
-                  ))}
+              {/* Menu Style */}
+              <SectionBox>
+                <Label>Menu Style</Label>
+                <ChipRow items={MENU_STYLES} value={settings.menuStyle} onSelect={v => update({ menuStyle: v })} getLabel={x => x.label} getValue={x => x.id} />
+              </SectionBox>
+
+              {/* Typography */}
+              <SectionBox>
+                <Label>Font — Arabic</Label>
+                <ChipRow items={FONTS_AR} value={settings.font} onSelect={v => update({ font: v })} getLabel={x => x.name} getValue={x => x.value} />
+                <div style={{ marginTop: 12 }}><Label>Font — English</Label>
+                  <ChipRow items={FONTS_EN} value={settings.font} onSelect={v => update({ font: v })} getLabel={x => x.name} getValue={x => x.value} />
                 </div>
-                <div className="flex gap-2">
-                  {["small", "medium", "large"].map(s => (
-                    <button key={s} onClick={() => setFontSize(s)} className={fontSize === s ? activeBtnCls : inactiveBtnCls}>
+                <div style={{ marginTop: 12 }}><Label>Font Color</Label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {PALETTE.map(c => (
+                      <button key={c} onClick={() => update({ fontColor: c })}
+                        style={{ width: 32, height: 32, borderRadius: 8, background: c, border: `2px solid ${settings.fontColor === c ? "white" : "transparent"}`, cursor: "pointer" }} />
+                    ))}
+                  </div>
+                </div>
+                <div style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center" }}><Label>Size</Label>
+                  {["13px","15px","17px","20px"].map(s => (
+                    <button key={s} onClick={() => update({ fontSize: s })}
+                      style={{ padding: "6px 12px", borderRadius: 10, fontSize: 12, cursor: "pointer", background: settings.fontSize === s ? "var(--ra)" : "var(--ra-dim)", color: settings.fontSize === s ? "#000b10" : "var(--ra)", border: `1px solid ${settings.fontSize === s ? "var(--ra)" : "var(--ra-border)"}` }}>
                       {s}
                     </button>
                   ))}
                 </div>
-              </div>
+                <div style={{ marginTop: 12 }}><Label>Weight</Label>
+                  <ChipRow items={[{l:"Thin",v:"300"},{l:"Regular",v:"400"},{l:"Bold",v:"700"},{l:"Black",v:"900"},{l:"Italic",v:"italic"}]} value={settings.fontWeight} onSelect={v => update({ fontWeight: v })} getLabel={x=>x.l} getValue={x=>x.v} />
+                </div>
+              </SectionBox>
 
-              {/* Buttons & Icons */}
-              <div className="rounded-xl border border-slate-800/50 bg-slate-900/30 p-4 mb-3">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-3">Buttons & Icons</div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <div className="text-xs text-slate-500 mb-2">Shape</div>
-                    <div className="flex gap-1">
-                      {["rounded", "sharp", "pill"].map(s => (
-                        <button key={s} onClick={() => setBtnShape(s)} className={`flex-1 py-1 text-xs ${btnShape === s ? activeBtnCls : inactiveBtnCls}`}>{s}</button>
+              {/* Buttons */}
+              <SectionBox>
+                <Label>Button Shape</Label>
+                <ChipRow items={BTN_SHAPES} value={settings.btnShape} onSelect={v => update({ btnShape: v })} getLabel={x=>x.label} getValue={x=>x.id} />
+                <div style={{ marginTop: 12 }}><Label>Button Color</Label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {PALETTE.map(c => (
+                      <button key={c} onClick={() => update({ btnColor: c })}
+                        style={{ width: 32, height: 32, borderRadius: 8, background: c, border: `2px solid ${settings.btnColor === c ? "white" : "transparent"}`, cursor: "pointer" }} />
+                    ))}
+                  </div>
+                </div>
+                <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <Label>Border Size</Label>
+                    <ChipRow items={["0","1","2","3"]} value={settings.borderSize} onSelect={v => update({ borderSize: v })} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <Label>Border Color</Label>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {PALETTE.slice(0, 6).map(c => (
+                        <button key={c} onClick={() => update({ borderColor: c + "66" })}
+                          style={{ width: 26, height: 26, borderRadius: 6, background: c, border: `2px solid ${settings.borderColor?.startsWith(c) ? "white" : "transparent"}`, cursor: "pointer" }} />
                       ))}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-xs text-slate-500 mb-2">Color</div>
-                    <input type="color" value={btnColor} onChange={e => setBtnColor(e.target.value)}
-                      className="w-full h-8 rounded-xl border border-slate-700 bg-transparent cursor-pointer" />
-                  </div>
-                  <div>
-                    <div className="text-xs text-slate-500 mb-2">Border Size</div>
-                    <div className="flex gap-1">
-                      {["none", "thin", "thick"].map(s => (
-                        <button key={s} onClick={() => setBorderSize(s)} className={`flex-1 py-1 text-xs ${borderSize === s ? activeBtnCls : inactiveBtnCls}`}>{s}</button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-slate-500 mb-2">Border Color</div>
-                    <input type="color" value={borderColor} onChange={e => setBorderColor(e.target.value)}
-                      className="w-full h-8 rounded-xl border border-slate-700 bg-transparent cursor-pointer" />
-                  </div>
                 </div>
-              </div>
-
-              {/* Menu Types */}
-              <div className="rounded-xl border border-slate-800/50 bg-slate-900/30 p-4 mb-3">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-3">Menu Styles</div>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {MENU_SECTIONS.map(s => (
-                    <button key={s} onClick={() => setSelectedMenuSection(s)}
-                      className={selectedMenuSection === s ? activeBtnCls : inactiveBtnCls}>{s}
-                    </button>
-                  ))}
-                </div>
-                <div className="text-xs text-slate-500 mb-2">Style for: {selectedMenuSection}</div>
-                <div className="flex flex-wrap gap-2">
-                  {MENU_STYLES.map(style => (
-                    <button key={style} onClick={() => setMenuStyles(prev => ({ ...prev, [selectedMenuSection]: style }))}
-                      className={menuStyles[selectedMenuSection] === style ? activeBtnCls : inactiveBtnCls}>
-                      {style}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-black font-bold text-sm tracking-wider hover:from-cyan-400 hover:to-blue-400 transition-all active:scale-95">
-                APPLY SETTINGS
-              </button>
+              </SectionBox>
             </motion.div>
           )}
 
-          {/* AI SETTINGS */}
-          {tab === "AI SETTINGS" && (
-            <motion.div key="ai" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-              className="space-y-3">
+          {/* ══════════ AI TAB ══════════ */}
+          {tab === "ai" && (
+            <motion.div key="ai" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
 
-              <div className="rounded-xl border border-slate-800/50 bg-slate-900/30 p-4">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-3">Personality</div>
-                <div className="flex flex-wrap gap-2">
-                  {AI_PERSONALITIES.map(p => (
-                    <button key={p} onClick={() => setAiPersonality(p)} className={aiPersonality === p ? activeBtnCls : inactiveBtnCls}>{p}</button>
-                  ))}
-                </div>
-              </div>
+              <SectionBox>
+                <Label>Personality</Label>
+                <ChipRow items={AI_PERSONALITIES} value={settings.aiPersonality} onSelect={v => update({ aiPersonality: v })} getLabel={x=>x.name} getValue={x=>x.id} />
+              </SectionBox>
 
-              <div className="rounded-xl border border-slate-800/50 bg-slate-900/30 p-4">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-3">Voice</div>
-                <div className="space-y-2">
-                  {VOICES.map(v => (
-                    <div key={v} className="flex items-center justify-between py-1">
-                      <span className={`text-sm ${aiVoice === v ? "text-cyan-400" : "text-slate-300"}`}>{v}</span>
-                      <div className="flex gap-2">
-                        <button onClick={() => setPreviewingVoice(v)}
-                          className={`px-3 py-1 rounded-lg text-xs border ${previewingVoice === v ? "border-cyan-500/50 text-cyan-400 bg-cyan-500/10" : "border-slate-700 text-slate-400 hover:border-cyan-500/50"} transition-all`}>
-                          Preview
-                        </button>
-                        <button onClick={() => setAiVoice(v)}
-                          className={`px-3 py-1 rounded-lg text-xs border ${aiVoice === v ? "bg-cyan-500 text-black border-cyan-500" : "border-slate-700 text-slate-400 hover:border-cyan-500/50"} transition-all`}>
-                          Apply
-                        </button>
-                      </div>
+              <SectionBox>
+                <Label>Voice</Label>
+                {ELEVENLABS_VOICES.map(v => (
+                  <div key={v.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--ra-border)" }}>
+                    <span style={{ fontSize: 14, color: settings.aiVoiceId === v.id ? "var(--ra)" : "var(--rt)" }}>{v.name}</span>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => previewElevenLabs(v.id)}
+                        style={{ padding: "5px 12px", borderRadius: 10, fontSize: 11, cursor: "pointer",
+                          background: previewVoice === v.id ? "var(--ra-dim)" : "rgba(255,255,255,0.04)",
+                          color: previewVoice === v.id ? "var(--ra)" : "var(--rt-dim)",
+                          border: "1px solid var(--ra-border)" }}>
+                        {previewVoice === v.id ? "▶ Playing" : "Preview"}
+                      </button>
+                      <button onClick={() => update({ aiVoiceId: v.id })}
+                        style={{ padding: "5px 14px", borderRadius: 10, fontSize: 11, cursor: "pointer",
+                          background: settings.aiVoiceId === v.id ? "var(--ra)" : "var(--ra-dim)",
+                          color: settings.aiVoiceId === v.id ? "#000b10" : "var(--ra)",
+                          border: `1px solid ${settings.aiVoiceId === v.id ? "var(--ra)" : "var(--ra-border)"}` }}>
+                        {settings.aiVoiceId === v.id ? "Active" : "Apply"}
+                      </button>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-800/50 bg-slate-900/30 p-4">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-3">Language</div>
-                <div className="flex flex-wrap gap-2">
-                  {LANGUAGES.map(l => (
-                    <button key={l} onClick={() => setAiLanguage(l)} className={aiLanguage === l ? activeBtnCls : inactiveBtnCls}>{l}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-800/50 bg-slate-900/30 p-4">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-3">Dialect</div>
-                <div className="flex flex-wrap gap-2">
-                  {DIALECTS.map(d => (
-                    <button key={d} onClick={() => setAiDialect(d)} className={aiDialect === d ? activeBtnCls : inactiveBtnCls}>{d}</button>
-                  ))}
-                </div>
-              </div>
-
-              <button className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-black font-bold text-sm tracking-wider hover:from-cyan-400 hover:to-blue-400 transition-all active:scale-95">
-                APPLY AI SETTINGS
-              </button>
-            </motion.div>
-          )}
-
-          {/* SECURITY */}
-          {tab === "SECURITY" && (
-            <motion.div key="sec" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-              className="space-y-3">
-
-              <div className="rounded-xl border border-slate-800/50 bg-slate-900/30 p-4">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-3">API Keys & Tokens</div>
-                <div className="space-y-3">
-                  <div>
-                    <div className="text-xs text-slate-500 mb-1.5">API Key</div>
-                    <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)}
-                      placeholder="Enter API key..."
-                      className="w-full bg-slate-900/80 border border-slate-700/50 rounded-xl px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-cyan-500/50 transition-all" />
                   </div>
-                  <div>
-                    <div className="text-xs text-slate-500 mb-1.5">Supreme Access Token</div>
-                    <input type="password" value={supremeToken} onChange={e => setSupremeToken(e.target.value)}
-                      placeholder="Enter supreme token..."
-                      className="w-full bg-slate-900/80 border border-slate-700/50 rounded-xl px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-cyan-500/50 transition-all" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-800/50 bg-slate-900/30 p-4 space-y-3">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-1">Access Control</div>
-                {["Change App Password", "Change Vault Password"].map(action => (
-                  <button key={action} className="w-full py-3 rounded-xl border border-slate-700 text-slate-300 text-sm hover:border-cyan-500/50 hover:text-cyan-400 transition-all text-left px-4">
-                    {action}
-                  </button>
                 ))}
-              </div>
-
-              <div className="rounded-xl border border-slate-800/50 bg-slate-900/30 p-4 space-y-3">
-                <div className="text-xs text-slate-500 uppercase tracking-widest mb-1">Vault Encryption</div>
-                <div className="flex gap-3">
-                  <button className="flex-1 py-3 rounded-xl bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-sm font-bold hover:bg-cyan-500/30 transition-all">
-                    Encrypt Files
-                  </button>
-                  <button className="flex-1 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-sm font-bold hover:border-cyan-500/50 transition-all">
-                    Decrypt Files
-                  </button>
+                <div style={{ marginTop: 12 }}>
+                  <Label>ElevenLabs API Key</Label>
+                  <input type="password" value={settings.elevenLabsKey || ""} onChange={e => update({ elevenLabsKey: e.target.value })}
+                    placeholder="sk-..."
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 12, background: "rgba(0,0,0,0.3)", border: "1px solid var(--ra-border)", color: "var(--rt)", fontSize: 13, outline: "none" }} />
                 </div>
-              </div>
+              </SectionBox>
 
-              <button className="w-full py-3.5 rounded-xl border border-red-500/30 text-red-400 text-sm font-bold hover:bg-red-500/10 transition-all">
-                Reset All Settings
-              </button>
+              <SectionBox>
+                <Label>Language</Label>
+                <ChipRow items={LANG_OPTIONS} value={settings.aiLang} onSelect={v => update({ aiLang: v })} getLabel={x=>x.label} getValue={x=>x.id} />
+              </SectionBox>
+
+              <SectionBox>
+                <Label>Dialect</Label>
+                {AI_DIALECTS.map(group => (
+                  <div key={group.group} style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 10, color: "var(--rt-dim)", marginBottom: 6, letterSpacing: "0.1em" }}>{group.group}</div>
+                    <ChipRow items={group.items} value={settings.aiDialect} onSelect={v => update({ aiDialect: v })} />
+                  </div>
+                ))}
+              </SectionBox>
+            </motion.div>
+          )}
+
+          {/* ══════════ CHARACTER TAB ══════════ */}
+          {tab === "char" && (
+            <motion.div key="char" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <SectionBox>
+                <Label>Visibility</Label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[{l:"Show",v:true},{l:"Hide",v:false}].map(o => (
+                    <button key={String(o.v)} onClick={() => update({ charVisible: o.v })}
+                      style={{ flex: 1, padding: "10px 0", borderRadius: 12, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                        background: settings.charVisible === o.v ? "var(--ra)" : "var(--ra-dim)",
+                        color: settings.charVisible === o.v ? "#000b10" : "var(--ra)",
+                        border: `1px solid ${settings.charVisible === o.v ? "var(--ra)" : "var(--ra-border)"}` }}>
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+              </SectionBox>
+              <SectionBox>
+                <Label>Size — {settings.charSize}%</Label>
+                <input type="range" min={40} max={200} value={settings.charSize} onChange={e => update({ charSize: +e.target.value })}
+                  style={{ width: "100%", accentColor: "var(--ra)" }} />
+              </SectionBox>
+              <SectionBox>
+                <Label>Auto Animation</Label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[{l:"On",v:true},{l:"Off",v:false}].map(o => (
+                    <button key={String(o.v)} onClick={() => update({ charAutoAnim: o.v })}
+                      style={{ flex: 1, padding: "10px 0", borderRadius: 12, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                        background: settings.charAutoAnim === o.v ? "var(--ra)" : "var(--ra-dim)",
+                        color: settings.charAutoAnim === o.v ? "#000b10" : "var(--ra)",
+                        border: `1px solid ${settings.charAutoAnim === o.v ? "var(--ra)" : "var(--ra-border)"}` }}>
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+              </SectionBox>
+              <SectionBox>
+                <Label>Accent Color</Label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {PALETTE.map(c => (
+                    <button key={c} onClick={() => update({ charAccent: c })}
+                      style={{ width: 34, height: 34, borderRadius: 8, background: c, border: `2px solid ${(settings.charAccent||"#00eaff") === c ? "white" : "transparent"}`, cursor: "pointer" }} />
+                  ))}
+                </div>
+              </SectionBox>
+            </motion.div>
+          )}
+
+          {/* ══════════ SECURITY TAB ══════════ */}
+          {tab === "security" && (
+            <motion.div key="security" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+
+              <SectionBox>
+                <Label>Ad Tokens</Label>
+                {[{l:"Meta",k:"metaToken"},{l:"Google Ads",k:"googleAdsToken"},{l:"YouTube",k:"youtubeToken"},{l:"Snapchat",k:"snapToken"},{l:"TikTok",k:"tiktokToken"}].map(t => (
+                  <div key={t.k} style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 11, color: "var(--rt-dim)", marginBottom: 4 }}>{t.l}</div>
+                    <input type="password" value={settings[t.k] || ""} onChange={e => update({ [t.k]: e.target.value })}
+                      placeholder={`${t.l} Token`}
+                      style={{ width: "100%", padding: "10px 14px", borderRadius: 12, background: "rgba(0,0,0,0.3)", border: "1px solid var(--ra-border)", color: "var(--rt)", fontSize: 13, outline: "none" }} />
+                  </div>
+                ))}
+              </SectionBox>
+
+              <SectionBox>
+                <Label>Supreme Access</Label>
+                <input type="password" value={settings.supremeKey || ""} onChange={e => update({ supremeKey: e.target.value })}
+                  placeholder="Supreme Access Key"
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 12, background: "rgba(0,0,0,0.3)", border: "1px solid var(--ra-border)", color: "var(--rt)", fontSize: 13, outline: "none" }} />
+              </SectionBox>
+
+              <SectionBox>
+                <Label>App Lock Type</Label>
+                <ChipRow items={[{l:"PIN",v:"pin"},{l:"Pattern",v:"pattern"},{l:"Voice",v:"voice"}]} value={settings.appLock} onSelect={v => update({ appLock: v })} getLabel={x=>x.l} getValue={x=>x.v} />
+                {settings.appLock === "pin" && (
+                  <div style={{ marginTop: 12 }}>
+                    <Label>PIN Code</Label>
+                    <input type="password" maxLength={8} value={settings.appPin || ""} onChange={e => update({ appPin: e.target.value })}
+                      placeholder="New PIN"
+                      style={{ width: "100%", padding: "10px 14px", borderRadius: 12, background: "rgba(0,0,0,0.3)", border: "1px solid var(--ra-border)", color: "var(--rt)", fontSize: 20, letterSpacing: "0.3em", outline: "none" }} />
+                  </div>
+                )}
+              </SectionBox>
+
+              <SectionBox>
+                <Label>Vault Lock</Label>
+                <ChipRow items={[{l:"Face ID",v:"face"},{l:"PIN",v:"pin"}]} value={settings.vaultLock || "face"} onSelect={v => update({ vaultLock: v })} getLabel={x=>x.l} getValue={x=>x.v} />
+              </SectionBox>
+
+              <SectionBox>
+                <Label>Entry Notification Sound</Label>
+                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                  {[{l:"On",v:true},{l:"Off",v:false}].map(o => (
+                    <button key={String(o.v)} onClick={() => update({ notifSound: o.v })}
+                      style={{ flex: 1, padding: "9px 0", borderRadius: 12, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                        background: settings.notifSound === o.v ? "var(--ra)" : "var(--ra-dim)",
+                        color: settings.notifSound === o.v ? "#000b10" : "var(--ra)",
+                        border: `1px solid ${settings.notifSound === o.v ? "var(--ra)" : "var(--ra-border)"}` }}>
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+                <input type="range" min={0} max={100} value={settings.notifVolume || 70}
+                  onChange={e => update({ notifVolume: +e.target.value })}
+                  style={{ width: "100%", accentColor: "var(--ra)" }} />
+              </SectionBox>
             </motion.div>
           )}
         </AnimatePresence>
