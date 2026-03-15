@@ -151,12 +151,13 @@ export default function GlobalHeader({ onCharacterToggle, characterVisible, onCh
                     min={50} max={150} step={5}
                     className="[&_[role=slider]]:bg-cyan-400 [&_[role=slider]]:border-cyan-400" />
                   <div className="text-right text-xs text-cyan-400 mt-1">{characterSize[0]}%</div>
-                  <div className="text-xs text-slate-500 mb-2 mt-3 uppercase tracking-wider">Animation</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {["idle", "talk", "wave", "jump"].map((anim) => (
-                      <button key={anim} onClick={() => onAnimation && onAnimation(anim)}
-                        className="py-1 rounded-lg text-xs border border-slate-700 text-slate-400 hover:border-cyan-500/50 hover:text-cyan-400 uppercase transition-all">
-                        {anim}
+                  <div className="text-xs text-slate-500 mb-2 mt-3 uppercase tracking-wider">Theme</div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {THEMES.map((t) => (
+                      <button key={t.id} onClick={() => onThemeChange && onThemeChange(t.id)}
+                        className={`py-1 rounded-lg text-xs border uppercase transition-all
+                          ${currentTheme === t.id ? "bg-cyan-500 text-black border-cyan-500" : "border-slate-700 text-slate-400 hover:border-cyan-500/50 hover:text-cyan-400"}`}>
+                        {t.label}
                       </button>
                     ))}
                   </div>
