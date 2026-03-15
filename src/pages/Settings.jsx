@@ -60,20 +60,17 @@ function Sheet({ open, onClose, title, children }) {
 }
 
 // ── Setting Row ── زر يفتح Sheet ─────────────────────────
-function SettingRow({ label, value, onOpen, icon }) {
+function SettingRow({ label, value, onOpen }) {
   return (
     <button onClick={onOpen} style={{
       width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
       padding: "14px 16px", borderRadius: 14, marginBottom: 8, cursor: "pointer",
       background: "var(--rc)", border: "1px solid var(--ra-border)", textAlign: "left"
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {icon && <span style={{ fontSize: 18 }}>{icon}</span>}
-        <span style={{ fontSize: 13, color: "var(--rt)", fontWeight: 500 }}>{label}</span>
-      </div>
+      <span style={{ fontSize: 13, color: "var(--rt)", fontWeight: 500 }}>{label}</span>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: 12, color: "var(--ra)", fontWeight: 600, maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</span>
-        <span style={{ color: "var(--rt-dim)", fontSize: 16 }}>›</span>
+        <span style={{ fontSize: 12, color: "var(--ra)", fontWeight: 600, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value}</span>
+        <span style={{ color: "var(--rt-dim)", fontSize: 18, lineHeight: 1 }}>›</span>
       </div>
     </button>
   );
@@ -165,27 +162,17 @@ export default function Settings() {
     closeSheet();
   };
 
-  const previewElevenLabs = async (voiceId) => {
+  const previewElevenLabs = (voiceId) => {
+    // Use Web Speech API for free preview — no API key needed
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
     setPreviewVoice(voiceId);
-    try {
-      const key = settings.elevenLabsKey || "";
-      if (!key) { setPreviewVoice(null); return; }
-      const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-        method: "POST",
-        headers: { "xi-api-key": key, "Content-Type": "application/json" },
-        body: JSON.stringify({ text: "مرحبا، أنا مساعدك الذكي", voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
-      });
-      if (!r.ok) { setPreviewVoice(null); return; }
-      const blob = await r.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.onerror = () => URL.revokeObjectURL(url);
-      audio.onended = () => URL.revokeObjectURL(url);
-      await audio.play();
-    } catch (e) {
-      console.warn("Voice preview error:", e);
-    }
-    setTimeout(() => setPreviewVoice(null), 3000);
+    const utter = new SpeechSynthesisUtterance("مرحبا، أنا مساعدك الذكي RARE");
+    utter.lang = "ar-SA";
+    utter.rate = 0.9;
+    utter.onend = () => setPreviewVoice(null);
+    utter.onerror = () => setPreviewVoice(null);
+    window.speechSynthesis.speak(utter);
   };
 
   // readable labels
