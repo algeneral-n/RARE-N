@@ -15,7 +15,7 @@ import RareVault from './pages/RareVault';
 import RareConnect from './pages/RareConnect';
 import RareMap from './pages/RareMap';
 import Settings from './pages/Settings';
-import AppLayout from './components/AppLayout';
+import AppLayout from './components/AppLayout.jsx';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
