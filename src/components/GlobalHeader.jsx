@@ -59,7 +59,7 @@ export default function GlobalHeader() {
   const navigate = useNavigate();
   const location = useLocation();
   const { settings, update, theme } = useAppSettings();
-  const [panel, setPanel] = useState(null); // null | 'menu' | 'voice' | 'char'
+  const [panel, setPanel] = useState(null);
 
   const toggle = (p) => setPanel(prev => prev === p ? null : p);
   const close = () => setPanel(null);
@@ -69,31 +69,19 @@ export default function GlobalHeader() {
 
   return (
     <>
-      {/* ── Header Bar ── */}
+      {/* ── Header Bar: 5 أزرار فقط ── */}
       <div className="fixed top-0 left-0 right-0" style={{ zIndex: 50, paddingTop: "env(safe-area-inset-top, 0px)" }}>
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "10px 14px",
+          padding: "10px 16px",
           background: "rgba(0,11,16,0.88)", backdropFilter: "blur(24px)",
           borderBottom: `1px solid ${theme.accentBorder}`
         }}>
-          {/* Menu */}
           <Btn active={panel === "menu"} onClick={() => toggle("menu")}><IcMenu /></Btn>
-
-          {/* Center – tap to go Home */}
-          <button onClick={() => { close(); navigate("/Home"); }}
-            style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}>
-            <img src="https://media.base44.com/images/public/69b6e8a7a264ea4af0f95823/6c80e7ccb_icon.png"
-              alt="" style={{ width: 34, height: 34, borderRadius: 10, boxShadow: `0 0 14px ${theme.accent}55` }} />
-          </button>
-
-          {/* Right group */}
-          <div style={{ display: "flex", gap: 8 }}>
-            <Btn active={panel === "voice" || voiceMode === "on"} onClick={() => toggle("voice")}><IcVoice on={voiceMode === "on"} /></Btn>
-            <Btn active={panel === "char"} onClick={() => toggle("char")}><IcChar /></Btn>
-            <Btn active={location.pathname === "/Settings"} onClick={() => { close(); navigate("/Settings"); }}><IcSettings /></Btn>
-            <Btn danger onClick={() => base44.auth.logout()}><IcLogout /></Btn>
-          </div>
+          <Btn active={panel === "voice" || voiceMode === "on"} onClick={() => toggle("voice")}><IcVoice on={voiceMode === "on"} /></Btn>
+          <Btn active={panel === "char"} onClick={() => toggle("char")}><IcChar /></Btn>
+          <Btn active={location.pathname === "/Settings"} onClick={() => { close(); navigate("/Settings"); }}><IcSettings /></Btn>
+          <Btn danger onClick={() => base44.auth.logout()}><IcLogout /></Btn>
         </div>
       </div>
 
