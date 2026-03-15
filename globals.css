@@ -1,0 +1,96 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+:root {
+  --background: #E0E5EC;
+  --foreground: #000000;
+  --nm-light: #ffffff;
+  --nm-dark: #BABECC;
+  --accent: #FF6321;
+  --border-color: #000000;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+  font-family: var(--font-sans);
+}
+
+/* Neumorphism Utilities with Black Borders */
+.nm-flat {
+  background: var(--background);
+  box-shadow: 5px 5px 10px var(--nm-dark), -5px -5px 10px var(--nm-light);
+  border-radius: var(--btn-radius, 24px);
+  border: 1px solid var(--border-color);
+}
+
+.nm-inset {
+  background: var(--background);
+  box-shadow: inset 5px 5px 10px var(--nm-dark), inset -5px -5px 10px var(--nm-light);
+  border-radius: var(--btn-radius, 24px);
+  border: 1px solid var(--border-color);
+}
+
+.nm-button {
+  background: var(--background);
+  box-shadow: 5px 5px 10px var(--nm-dark), -5px -5px 10px var(--nm-light);
+  transition: all 0.2s ease;
+  border-radius: var(--btn-radius, 24px);
+  border: 1px solid var(--border-color);
+}
+
+.nm-button:active {
+  box-shadow: inset 2px 2px 5px var(--nm-dark), inset -2px -2px 5px var(--nm-light);
+  transform: scale(0.98);
+}
+
+.nm-card {
+  background: var(--background);
+  border-radius: 40px;
+  box-shadow: 8px 8px 16px var(--nm-dark), -8px -8px 16px var(--nm-light);
+  border: 1px solid var(--border-color);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--nm-dark);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
+/* Animations */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Mobile-first text and icon adjustments */
+@media (max-width: 768px) {
+  .text-xs { font-size: 0.75rem !important; }
+  .text-[10px] { font-size: 0.7rem !important; }
+  .text-[8px] { font-size: 0.65rem !important; }
+  .p-6 { padding: 1rem !important; }
+  .gap-6 { gap: 1rem !important; }
+  .w-64 { width: 85vw !important; }
+}
