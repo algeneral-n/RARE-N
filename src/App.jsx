@@ -14,7 +14,7 @@ import MyRare from './pages/MyRare';
 import RareVault from './pages/RareVault';
 import RareConnect from './pages/RareConnect';
 import RareMap from './pages/RareMap';
-import Settings from './pages/Settings';
+import Settings from './pages/Settings.jsx';
 import AppLayout from './components/AppLayout.jsx';
 import { AppSettingsProvider } from './components/AppSettingsContext';
 
