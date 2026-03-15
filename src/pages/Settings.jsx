@@ -256,22 +256,22 @@ export default function Settings() {
           {/* ══ CHAR ══ */}
           {tab === "char" && (
             <motion.div key="char" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}>
-              <SettingRow label="Visibility" value={settings.charVisible ? "Shown" : "Hidden"} icon="👁" onOpen={() => openSheet("charVisible")} />
-              <SettingRow label="Size" value={`${settings.charSize || 100}%`} icon="↔" onOpen={() => openSheet("charSize")} />
-              <SettingRow label="Auto Animation" value={settings.charAutoAnim ? "On" : "Off"} icon="✨" onOpen={() => openSheet("charAnim")} />
-              <SettingRow label="Accent Color" value={settings.charAccent || "#00eaff"} icon="💡" onOpen={() => openSheet("charColor")} />
+              <SettingRow label="Visibility" value={settings.charVisible ? "Shown" : "Hidden"} onOpen={() => openSheet("charVisible")} />
+              <SettingRow label="Size" value={`${settings.charSize || 100}%`} onOpen={() => openSheet("charSize")} />
+              <SettingRow label="Auto Animation" value={settings.charAutoAnim ? "On" : "Off"} onOpen={() => openSheet("charAnim")} />
+              <SettingRow label="Accent Color" value={settings.charAccent || "#00eaff"} onOpen={() => openSheet("charColor")} />
             </motion.div>
           )}
 
           {/* ══ SECURITY ══ */}
           {tab === "security" && (
             <motion.div key="security" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}>
-              <SettingRow label="App Lock" value={settings.appLock || "PIN"} icon="🔒" onOpen={() => openSheet("appLock")} />
-              <SettingRow label="App PIN" value={settings.appPin ? "••••" : "Not set"} icon="🔢" onOpen={() => openSheet("appPin")} />
-              <SettingRow label="Vault Lock" value={settings.vaultLock || "Face ID"} icon="🏦" onOpen={() => openSheet("vaultLock")} />
-              <SettingRow label="Supreme Key" value={settings.supremeKey ? "••••••••" : "Not set"} icon="👑" onOpen={() => openSheet("supremeKey")} />
-              <SettingRow label="Ad Tokens" value="Manage" icon="📢" onOpen={() => openSheet("adTokens")} />
-              <SettingRow label="Notification Sound" value={settings.notifSound ? `On — ${settings.notifVolume || 70}%` : "Off"} icon="🔔" onOpen={() => openSheet("notif")} />
+              <SettingRow label="App Lock" value={settings.appLock || "PIN"} onOpen={() => openSheet("appLock")} />
+              <SettingRow label="App PIN" value={settings.appPin ? "••••" : "Not set"} onOpen={() => openSheet("appPin")} />
+              <SettingRow label="Vault Lock" value={settings.vaultLock || "Face ID"} onOpen={() => openSheet("vaultLock")} />
+              <SettingRow label="Supreme Key" value={settings.supremeKey ? "••••••••" : "Not set"} onOpen={() => openSheet("supremeKey")} />
+              <SettingRow label="Ad Tokens" value="Manage" onOpen={() => openSheet("adTokens")} />
+              <SettingRow label="Notification Sound" value={settings.notifSound ? `On — ${settings.notifVolume || 70}%` : "Off"} onOpen={() => openSheet("notif")} />
             </motion.div>
           )}
 
