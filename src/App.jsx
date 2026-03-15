@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 import Verify from './pages/Verify.jsx';
-import Home from './pages/Home';
+import Home from './pages/Home.jsx';
 import RareCodec from './pages/RareCodec';
 import RareHub from './pages/RareHub';
 import MyRare from './pages/MyRare';
