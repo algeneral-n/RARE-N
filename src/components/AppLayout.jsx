@@ -6,7 +6,13 @@ import RareCharacter3D from "./RareCharacter3D";
 export default function AppLayout() {
   const [characterVisible, setCharacterVisible] = useState(true);
   const [characterSize, setCharacterSize] = useState(100);
-  const [animation, setAnimation] = useState("idle");
+  const [theme, setTheme] = useState("cyberpunk");
+
+  useEffect(() => {
+    const themes = ["cyberpunk","neumorphism","glass","neon","black-gold","apple"];
+    themes.forEach(t => document.body.classList.remove(`theme-${t}`));
+    document.body.classList.add(`theme-${theme}`);
+  }, [theme]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white relative overflow-hidden">
@@ -21,12 +27,13 @@ export default function AppLayout() {
         characterVisible={characterVisible}
         onCharacterToggle={() => setCharacterVisible(!characterVisible)}
         onCharacterSizeChange={setCharacterSize}
-        onAnimation={setAnimation}
+        currentTheme={theme}
+        onThemeChange={setTheme}
       />
 
-      {/* Character - fixed bottom center */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
-        <RareCharacter visible={characterVisible} size={characterSize} animation={animation} />
+      {/* Character 3D - fixed bottom center */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 z-30">
+        <RareCharacter3D visible={characterVisible} size={characterSize} />
       </div>
 
       {/* Page content */}
