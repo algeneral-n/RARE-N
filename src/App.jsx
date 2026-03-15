@@ -17,6 +17,7 @@ import RareMap from './pages/RareMap';
 import Settings from './pages/Settings.jsx';
 import AppLayout from './components/AppLayout.jsx';
 import { AppSettingsProvider } from './components/AppSettingsContext';
+// AppSettingsProvider is used inside AppLayout only, no duplicate needed here
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();

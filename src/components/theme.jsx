@@ -10,6 +10,8 @@ export const THEMES = {
   neon: { bg: "#000000", card: "rgba(5,0,5,0.95)", accent: "#ff00ff", accentDim: "rgba(255,0,255,0.1)", accentBorder: "rgba(255,0,255,0.22)", text: "#ffe0ff", textDim: "rgba(255,224,255,0.4)", name: "Neon" },
   midnight: { bg: "#04060f", card: "rgba(10,14,30,0.9)", accent: "#3b82f6", accentDim: "rgba(59,130,246,0.12)", accentBorder: "rgba(59,130,246,0.22)", text: "#dbeafe", textDim: "rgba(219,234,254,0.4)", name: "Midnight" },
   apple: { bg: "#f5f5f7", card: "rgba(255,255,255,0.9)", accent: "#0071e3", accentDim: "rgba(0,113,227,0.1)", accentBorder: "rgba(0,113,227,0.2)", text: "#1d1d1f", textDim: "rgba(29,29,31,0.45)", name: "Apple" },
+  // RARE Character theme — colors extracted from the GLB model repo
+  rarechar: { bg: "#050308", card: "rgba(18,8,30,0.92)", accent: "#c084fc", accentDim: "rgba(192,132,252,0.13)", accentBorder: "rgba(192,132,252,0.25)", text: "#f3e8ff", textDim: "rgba(243,232,255,0.4)", name: "RARE Char" },
 };
 
 export const FONTS_AR = [
