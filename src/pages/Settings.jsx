@@ -168,14 +168,23 @@ export default function Settings() {
   const previewElevenLabs = async (voiceId) => {
     setPreviewVoice(voiceId);
     try {
-      const key = settings.elevenLabsKey || ""; if (!key) { setPreviewVoice(null); return; }
+      const key = settings.elevenLabsKey || "";
+      if (!key) { setPreviewVoice(null); return; }
       const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: "POST",
         headers: { "xi-api-key": key, "Content-Type": "application/json" },
         body: JSON.stringify({ text: "مرحبا، أنا مساعدك الذكي", voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
       });
-      new Audio(URL.createObjectURL(await r.blob())).play();
-    } catch {}
+      if (!r.ok) { setPreviewVoice(null); return; }
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onerror = () => URL.revokeObjectURL(url);
+      audio.onended = () => URL.revokeObjectURL(url);
+      await audio.play();
+    } catch (e) {
+      console.warn("Voice preview error:", e);
+    }
     setTimeout(() => setPreviewVoice(null), 3000);
   };
 
