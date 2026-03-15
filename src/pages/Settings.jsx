@@ -228,28 +228,28 @@ export default function Settings() {
           {/* ══ UI ══ */}
           {tab === "ui" && (
             <motion.div key="ui" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}>
-              <SettingRow label="Background" value={settings.bgImage ? "Custom Image" : "Default"} icon="🖼" onOpen={() => openSheet("bg")} />
-              <SettingRow label="Theme" value={themeLabel} icon="🎨" onOpen={() => openSheet("theme")} />
-              <SettingRow label="Menu Style" value={menuLabel} icon="☰" onOpen={() => openSheet("menu")} />
-              <SettingRow label="Font" value={fontName} icon="𝔸" onOpen={() => openSheet("font")} />
-              <SettingRow label="Font Color" value={settings.fontColor || "#e2f5ff"} icon="🅰" onOpen={() => openSheet("fontColor")} />
-              <SettingRow label="Font Size" value={settings.fontSize || "15px"} icon="↕" onOpen={() => openSheet("fontSize")} />
-              <SettingRow label="Font Weight" value={settings.fontWeight || "400"} icon="𝐁" onOpen={() => openSheet("fontWeight")} />
-              <SettingRow label="Button Shape" value={btnShapeLabel} icon="⬜" onOpen={() => openSheet("btnShape")} />
-              <SettingRow label="Button Color" value={settings.btnColor || "#00eaff"} icon="🔵" onOpen={() => openSheet("btnColor")} />
-              <SettingRow label="Border Size" value={(settings.borderSize || "1") + "px"} icon="▭" onOpen={() => openSheet("borderSize")} />
-              <SettingRow label="Border Color" value={settings.borderColor || "Default"} icon="🔲" onOpen={() => openSheet("borderColor")} />
+              <SettingRow label="Background" value={settings.bgImage ? "Custom Image" : "Default"} onOpen={() => openSheet("bg")} />
+              <SettingRow label="Theme" value={themeLabel} onOpen={() => openSheet("theme")} />
+              <SettingRow label="Menu Style" value={menuLabel} onOpen={() => openSheet("menu")} />
+              <SettingRow label="Font" value={fontName} onOpen={() => openSheet("font")} />
+              <SettingRow label="Font Color" value={settings.fontColor || "#e2f5ff"} onOpen={() => openSheet("fontColor")} />
+              <SettingRow label="Font Size" value={settings.fontSize || "15px"} onOpen={() => openSheet("fontSize")} />
+              <SettingRow label="Font Weight" value={settings.fontWeight || "400"} onOpen={() => openSheet("fontWeight")} />
+              <SettingRow label="Button Shape" value={btnShapeLabel} onOpen={() => openSheet("btnShape")} />
+              <SettingRow label="Button Color" value={settings.btnColor || "#00eaff"} onOpen={() => openSheet("btnColor")} />
+              <SettingRow label="Border Size" value={(settings.borderSize || "1") + "px"} onOpen={() => openSheet("borderSize")} />
+              <SettingRow label="Border Color" value={settings.borderColor || "Default"} onOpen={() => openSheet("borderColor")} />
             </motion.div>
           )}
 
           {/* ══ AI ══ */}
           {tab === "ai" && (
             <motion.div key="ai" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}>
-              <SettingRow label="Personality" value={personalityLabel} icon="🤖" onOpen={() => openSheet("personality")} />
-              <SettingRow label="Voice" value={voiceName} icon="🔊" onOpen={() => openSheet("voice")} />
-              <SettingRow label="Language" value={langLabel} icon="🌐" onOpen={() => openSheet("lang")} />
-              <SettingRow label="Dialect" value={dialectLabel} icon="💬" onOpen={() => openSheet("dialect")} />
-              <SettingRow label="ElevenLabs Key" value={settings.elevenLabsKey ? "••••••••" : "Not set"} icon="🔑" onOpen={() => openSheet("elevenKey")} />
+              <SettingRow label="Personality" value={personalityLabel} onOpen={() => openSheet("personality")} />
+              <SettingRow label="Voice" value={voiceName} onOpen={() => openSheet("voice")} />
+              <SettingRow label="Language" value={langLabel} onOpen={() => openSheet("lang")} />
+              <SettingRow label="Dialect" value={dialectLabel} onOpen={() => openSheet("dialect")} />
+              <SettingRow label="ElevenLabs Key" value={settings.elevenLabsKey ? "••••••••" : "Not set"} onOpen={() => openSheet("elevenKey")} />
             </motion.div>
           )}
 
