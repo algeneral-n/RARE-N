@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import GlobalHeader from "./GlobalHeader";
-import RareCharacter from "./RareCharacter";
+import RareCharacter3D from "./RareCharacter3D";
 
 export default function AppLayout() {
   const [characterVisible, setCharacterVisible] = useState(true);
